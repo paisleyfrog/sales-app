@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supervisor Dashboard</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #0078ff;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f1f1f1;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    select, input {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    button {
+      padding: 12px 20px;
+      background: #0078ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background: #005fcc;
+    }
+
+    .logout {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .logout button {
+      background: #ff4d4d;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Supervisor Dashboard</h2>
+
+    <!-- Filters -->
+    <div class="filters">
+      <select id="salespersonFilter">
+        <option value="">All Salespeople</option>
+      </select>
+
+      <input type="date" id="dateFilter" />
+      <input type="text" id="productFilter" placeholder="Filter by product" />
+
+      <button onclick="applyFilters()">Apply Filters</button>
+    </div>
+
+    <!-- Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Product</th>
+          <th>Amount</th>
+          <th>Notes</th>
+          <th>Salesperson</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="salesTable"></tbody>
+    </table>
+
+    <div class="logout">
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <script>
+    let allSales = [];
+
+    // Redirect if not supervisor
+    if (!localStorage.getItem("token") || localStorage.getItem("role") !== "supervisor") {
+      window.location.href = "login.html";
+    }
+
+    async function loadSales() {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch("http://localhost:3000/sales/all", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+
+      const data = await response.json();
+      allSales = data;
+
+      populateSalespeople();
+      renderTable(allSales);
+    }
+
+    function populateSalespeople() {
+      const select = document.getElementById("salespersonFilter");
+      const uniqueNames = [...new Set(allSales.map(s => s[6]))];
+
+      uniqueNames.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+    }
+
+    function renderTable(data) {
+      const table = document.getElementById("salesTable");
+      table.innerHTML = "";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+
+        row.forEach(cell => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+
+        table.appendChild(tr);
+      });
+    }
+
+    function applyFilters() {
+      const salesperson = document.getElementById("salespersonFilter").value;
+      const date = document.getElementById("dateFilter").value;
+      const product = document.getElementById("productFilter").value.toLowerCase();
+
+      let filtered = allSales;
+
+      if (salesperson) {
+        filtered = filtered.filter(s => s[6] === salesperson);
+      }
+
+      if (date) {
+        filtered = filtered.filter(s => s[1] === date);
+      }
+
+      if (product) {
+        filtered = filtered.filter(s => s[3].toLowerCase().includes(product));
+      }
+
+      renderTable(filtered);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    loadSales();
+  </script>
+</body>
+</html>
