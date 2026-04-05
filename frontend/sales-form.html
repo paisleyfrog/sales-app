@@ -65,6 +65,13 @@
 </head>
 
 <body>
+  <nav class="top-nav">
+  <a href="sales-form.html">Sales Form</a>
+  <a href="team-view.html">Team View</a>
+  <a href="supervisor-dashboard.html" id="supervisorLink" style="display:none;">Supervisor Dashboard</a>
+  <a href="#" onclick="logout()">Logout</a>
+</nav>
+
   <div class="container">
     <h2>Submit a Sale</h2>
 
@@ -130,5 +137,17 @@
       window.location.href = "login.html";
     }
   </script>
+  <script>
+  const role = localStorage.getItem("role");
+  if (role === "supervisor") {
+    document.getElementById("supervisorLink").style.display = "inline";
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+</script>
+
 </body>
 </html>
